@@ -24,9 +24,9 @@
 *(Timestamp: 00:00 – 04:45)*
 
 * **What is Apache HTTP Server?**  
-  An open-source, cross-platform web server software developed and maintained by the Apache Software Foundation. In RHEL/CentOS/Amazon Linux, the service/package is referred to as `httpd`, while in Debian/Ubuntu, it is referred to as `apache2`.
+  An open-source, cross-platform web server software developed and maintained by the Apache Software Foundation. In RHEL/CentOS/Amazon Linux, the service/package is referred to as `httpd`, while in Debian/Ubuntu, it is called `apache2`.
 * **How it Works:**  
-  Listens for incoming HTTP/HTTPS requests from clients (browsers) on ports `80` (HTTP) and `443` (HTTPS), processes them, and serves static files (HTML, CSS, JS, images) or forwards requests to backend applications.
+  Listens for incoming HTTP/HTTPS requests from clients (browsers) on ports `80` (HTTP) and `443` (HTTPS), processes them, and serves static files (HTML, CSS, JS, images) or forwards requests to backend application servers.
 * **Apache vs. NGINX:**
   * **Apache:** Process/thread-driven architecture, highly flexible via `.htaccess` directory-level overrides, rich ecosystem of dynamic modules.
   * **NGINX:** Event-driven, asynchronous architecture, excels at handling high concurrency and static content with low memory overhead.
@@ -153,6 +153,21 @@ sudo certbot --apache -d example.com -d www.example.com
 * Follow the interactive prompts to enter your email, agree to the Terms of Service, and enable automatic HTTP-to-HTTPS redirection.
 * Certbot automatically creates an SSL VirtualHost file (e.g., `/etc/httpd/conf.d/le-ssl.conf`) and sets up a systemd timer/cron job for auto-renewal (`sudo certbot renew --dry-run`).
 
+### Manual SSL/TLS VirtualHost Configuration
+For a manually configured certificate, add an HTTPS VirtualHost like the following. Replace the example certificate and key paths with the actual paths on your server:
+```apache
+<VirtualHost *:443>
+    ServerName example.com
+    ServerAlias www.example.com
+    DocumentRoot /var/www/html
+
+    SSLEngine on
+    SSLCertificateFile /path/to/cert
+    SSLCertificateKeyFile /path/to/Key
+</VirtualHost>
+```
+Make sure Apache's SSL module is installed and enabled (for example, `mod_ssl` on RHEL/Amazon Linux or `sudo a2enmod ssl` on Ubuntu/Debian), and that Apache listens on port `443`. Protect the private key from unauthorized access. Validate the configuration with `sudo apachectl configtest` before reloading Apache. If Certbot manages the certificate, use its generated paths and configuration.
+
 ---
 
 ## 7. Virtual Hosts (Hosting Multiple Websites)
@@ -193,7 +208,7 @@ Run `sudo apachectl configtest` and `sudo systemctl reload httpd` to apply chang
 ## 8. Apache as a Reverse Proxy
 *(Timestamp: 01:06:38 – 01:15:34)*
 
-A **Reverse Proxy** sits in front of backend application servers (such as Node.js, Python/Flask, React, or Java Tomcat running on local ports like `3000` or `8080`) and forwards client requests to them.
+A **Reverse Proxy** sits in front of backend application servers (such as Node.js, Python/Flask, React, or Java Tomcat running on local ports like `3000` or `8080`) and forwards client requests to the backend.
 
 ### Required Modules
 Ensure `mod_proxy` and `mod_proxy_http` are enabled (enabled by default in standard RHEL/Amazon Linux builds; on Ubuntu, run `sudo a2enmod proxy proxy_http`).
@@ -251,4 +266,4 @@ To continue mastering Apache Web Server, explore:
 * **`.htaccess` & URL Rewriting (`mod_rewrite`):** Creating SEO-friendly URLs and directory-level overrides.
 * **Basic Authentication (`.htpasswd`):** Password-protecting sensitive endpoints or admin directories.
 * **Performance Tuning:** Understanding Multi-Processing Modules (**MPMs**) such as `prefork`, `worker`, and `event`, along with `KeepAlive` settings.
-* **Security Hardening:** Hiding server version banners (`ServerTokens Prod`, `ServerSignature Off`), configuring security headers (`X-Frame-Options`, `Strict-Transport-Security`), and setting up ModSecurity (WAF).
+* **Security Hardening:** Hiding server version banners (`ServerTokens Prod`, `ServerSignature Off`), configuring security headers (`X-Frame-Options`, `Strict-Transport-Security`), and setting up ModSecurity.
